@@ -1,22 +1,13 @@
-# Node
+# dependencies
 node_modules/
 
-# Cypress artifacts
-cypress/videos/
-cypress/screenshots/
-
-# OS files
-.DS_Store
-
-# IntelliJ / IDE
+# IDEs
 .idea/
 *.iml
 
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# OS
+.DS_Store
 
-# Environment files (if will be added later)
-.env
-.env.*
+# Cypress artifacts (optional: keep videos/screenshots out of git)
+cypress/videos/
+cypress/screenshots/
