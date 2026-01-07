@@ -36,8 +36,8 @@ jobs:
           path: cypress/screenshots
           if-no-files-found: ignore
 
-      - name: Upload Cypress videos (on failure)
-        if: failure()
+      - name: Upload Cypress videos (always)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: cypress-videos
