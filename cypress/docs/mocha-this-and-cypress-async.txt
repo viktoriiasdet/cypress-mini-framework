@@ -1,0 +1,77 @@
+# Mocha `this` Context and Cypress Async Behavior
+
+This document explains how Mocha’s test context (`this`) works in Cypress, why arrow functions break it, and how Cypress’s asynchronous command queue affects test design.
+
+Cypress uses Mocha under the hood for test structure such as describe, it, before, beforeEach, after, and afterEach. Mocha provides a test context object, accessible via `this`.
+
+The Mocha test context has the following properties:
+- It is created per test.
+- It is shared between hooks (before, beforeEach) and tests (it).
+- It is available only when using `function () {}` syntax.
+
+Correct usage example:
+
+beforeEach(function () {
+  this.foo = 'bar';
+});
+
+it('uses context', function () {
+  expect(this.foo).to.eq('bar');
+});
+
+This shared object (`this`) is called the Mocha test context.
+
+Arrow functions break this behavior because they do not have their own `this`. They inherit `this` from the surrounding lexical scope. As a result, Mocha cannot bind its test context when arrow functions are used.
+
+Incorrect usage example:
+
+beforeEach(() => {
+  this.foo = 'bar'; // this is undefined
+});
+
+For this reason, Cypress documentation explicitly warns not to use arrow functions when accessing `this`.
+
+If asked why `function()` is used instead of arrow functions in Cypress, the correct explanation is:
+
+“Mocha binds `this` to the test context only when using `function()` syntax. Arrow functions don’t have their own `this`, so the Mocha test context is not available.”
+
+A shorter version of the same explanation is:
+
+“Arrow functions don’t bind Mocha’s test context, so `this` is undefined.”
+
+Even when using `function () {}`, relying on Mocha `this` in Cypress can still be error-prone because Cypress commands are asynchronous and executed via a command queue.
+
+Example of a common pitfall:
+
+beforeEach(function () {
+  cy.fixture('users').as('users');
+  cy.login(this.users.validUser.username);
+});
+
+This fails because Cypress commands are queued and executed later. The alias created by `cy.fixture().as()` is not immediately available, so `this.users` is still undefined at the time it is accessed.
+
+The preferred Cypress pattern is to avoid Mocha `this` entirely and use explicit chaining instead:
+
+cy.fixture('users').then((users) => {
+  cy.login(users.validUser.username, users.validUser.password);
+});
+
+This approach aligns with Cypress’s command queue, avoids timing issues, and produces clearer and more stable tests.
+
+A senior-level explanation of this approach is:
+
+“Because Cypress commands are queued asynchronously, relying on Mocha’s `this` with aliases can be error-prone. I prefer using `cy.fixture().then()` or custom commands for clarity and stability.”
+
+Key takeaways:
+- Mocha provides a test context (`this`).
+- It is available only when using `function () {}`.
+- Arrow functions break access to `this`.
+- Cypress commands are asynchronous and queued.
+- Using `cy.fixture().then()` or custom commands is more reliable.
+- Correct explanations should explicitly reference the Mocha test context.
+
+Practical guidance:
+- Use `function () {}` only if Mocha `this` is truly needed.
+- Prefer avoiding `this` entirely in Cypress tests.
+- Use custom commands such as `cy.loginAs()` for shared behavior.
+- This results in clearer, more stable, and interview-ready test code.
